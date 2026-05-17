@@ -1,0 +1,453 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restock Dashboard - All Medicines</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card .label {
+            color: #999;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card .value {
+            color: #667eea;
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+        
+        .stat-card.danger .value {
+            color: #ff4757;
+        }
+        
+        .stat-card.success .value {
+            color: #26de81;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        select,
+        input {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table thead {
+            background: #f8f9fa;
+        }
+        
+        table th {
+            padding: 15px;
+            text-align: left;
+            color: #667eea;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+        }
+        
+        table th:hover {
+            background: #e0e5ff;
+        }
+        
+        table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .priority-HIGH {
+            background: #ffe0e0;
+            color: #ff4757;
+        }
+        
+        .priority-MEDIUM {
+            background: #fff5e0;
+            color: #ffa502;
+        }
+        
+        .priority-LOW {
+            background: #e0f5e0;
+            color: #26de81;
+        }
+        
+        .status-Pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .status-Approved {
+            background: #e0f5e0;
+            color: #26de81;
+        }
+        
+        .status-Ordered {
+            background: #e0edff;
+            color: #667eea;
+        }
+        
+        .status-Delivered {
+            background: #f0e0ff;
+            color: #a29bfe;
+        }
+        
+        .number {
+            text-align: right;
+        }
+        
+        .medicine-name {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .result-info {
+            color: #666;
+            font-size: 0.95em;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Restock Recommendations Dashboard</h1>
+            <p>Manajemen stok obat dengan forecasting demand untuk inventory obat</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total Recommendations</div>
+                <div class="value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="label">High Priority</div>
+                <div class="value" id="stat-high">0</div>
+            </div>
+            <div class="stat-card success">
+                <div class="label">Total Medicines</div>
+                <div class="value" id="stat-medicines">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total Qty to Restock</div>
+                <div class="value" id="stat-qty">0</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h>Rekomendasi Restock Obat</h>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Cari:</label>
+                    <input type="text" id="search-medicine" placeholder="Filter obat..." style="width: 250px;">
+                </div>
+                <div class="control-group">
+                    <label>Priority:</label>
+                    <select id="filter-priority">
+                        <option value="">Semua</option>
+                        <option value="HIGH">HIGH</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Status:</label>
+                    <select id="filter-status">
+                        <option value="">Semua</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Ordered">Ordered</option>
+                        <option value="Delivered">Delivered</option>
+                    </select>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Minggu</th>
+                        <th>Obat</th>
+                        <th style="text-align: right">Forecast</th>
+                        <th style="text-align: right">Safety Stock</th>
+                        <th style="text-align: right">Reorder Point</th>
+                        <th style="text-align: right">Qty Restock</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px;">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="result-info" id="result-info"></div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        const STORAGE_KEY = 'medicine_status_';
+
+        fetch('all_medicines_recommendations.json')
+            .then(r => r.json())
+            .then(data => {
+                allData = data;
+                loadSavedStatuses();
+                updateStats();
+                renderTable(deduplicateMedicines(data));
+                attachFilters();
+            })
+            .catch(e => {
+                document.getElementById('table-body').innerHTML = '<tr><td colspan="9">Error loading data: ' + e.message + '</td></tr>';
+            });
+
+        function loadSavedStatuses() {
+            allData.forEach(record => {
+                const key = STORAGE_KEY + record.date + '_' + record.medicine_code;
+                const savedStatus = localStorage.getItem(key);
+                if (savedStatus) {
+                    record.status = savedStatus;
+                }
+            });
+        }
+
+        function deduplicateMedicines(data) {
+            const medicineMap = {};
+            const priorityOrder = {
+                'HIGH': 3,
+                'MEDIUM': 2,
+                'LOW': 1
+            };
+
+            data.forEach(record => {
+                const code = record.medicine_code;
+
+                if (!medicineMap[code]) {
+                    medicineMap[code] = record;
+                } else {
+                    const existing = medicineMap[code];
+                    const currentPriority = priorityOrder[record.priority] || 0;
+                    const existingPriority = priorityOrder[existing.priority] || 0;
+
+                    if (currentPriority > existingPriority) {
+                        medicineMap[code] = record;
+                    } else if (currentPriority === existingPriority && record.date > existing.date) {
+                        medicineMap[code] = record;
+                    }
+                }
+            });
+
+            return Object.values(medicineMap);
+        }
+
+        function updateStats() {
+            const filtered = filterData();
+            const highCount = filtered.filter(r => r.priority === 'HIGH').length;
+            const medicines = filtered.length;
+            const totalQty = filtered.reduce((sum, r) => sum + r.restock_quantity, 0);
+
+            document.getElementById('stat-total').textContent = filtered.length;
+            document.getElementById('stat-high').textContent = highCount;
+            document.getElementById('stat-medicines').textContent = medicines;
+            document.getElementById('stat-qty').textContent = totalQty.toLocaleString();
+        }
+
+        function filterData() {
+            const search = document.getElementById('search-medicine').value.toLowerCase();
+            const priority = document.getElementById('filter-priority').value;
+            const status = document.getElementById('filter-status').value;
+
+            let filtered = allData.filter(r => {
+                const matchSearch = r.medicine_name.toLowerCase().includes(search);
+                const matchPriority = !priority || r.priority === priority;
+                const matchStatus = !status || r.status === status;
+                return matchSearch && matchPriority && matchStatus;
+            });
+
+            return deduplicateMedicines(filtered);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">No data found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(r => '<tr>' +
+                '<td class="date">' + r.date + '</td>' +
+                '<td>' + r.week + '</td>' +
+                '<td class="medicine-name">' + r.medicine_name + '</td>' +
+                '<td class="number">' + r.forecast_demand + '</td>' +
+                '<td class="number">' + r.safety_stock.toLocaleString() + '</td>' +
+                '<td class="number">' + r.reorder_point.toLocaleString() + '</td>' +
+                '<td class="number"><strong>' + r.restock_quantity.toLocaleString() + '</strong></td>' +
+                '<td><span class="badge priority-' + r.priority + '">' + r.priority + '</span></td>' +
+                '<td><select class="badge status-' + r.status + '" onchange="updateStatus(this, \'' + r.date + '\', \'' + r.medicine_code + '\')">' +
+                '<option value="Pending" ' + (r.status === 'Pending' ? 'selected' : '') + '>Pending</option>' +
+                '<option value="Approved" ' + (r.status === 'Approved' ? 'selected' : '') + '>Approved</option>' +
+                '<option value="Ordered" ' + (r.status === 'Ordered' ? 'selected' : '') + '>Ordered</option>' +
+                '<option value="Delivered" ' + (r.status === 'Delivered' ? 'selected' : '') + '>Delivered</option>' +
+                '</select></td>' +
+                '</tr>').join('');
+
+            document.getElementById('result-info').innerHTML = 'Showing ' + data.length + ' unique medicines';
+        }
+
+        function attachFilters() {
+            document.getElementById('search-medicine').oninput = () => {
+                updateStats();
+                renderTable(filterData());
+            };
+            document.getElementById('filter-priority').onchange = () => {
+                updateStats();
+                renderTable(filterData());
+            };
+            document.getElementById('filter-status').onchange = () => {
+                updateStats();
+                renderTable(filterData());
+            };
+        }
+
+        function updateStatus(elem, date, code) {
+            const newStatus = elem.value;
+            const codeNum = parseInt(code); // Convert string to number
+
+            // Simpan ke localStorage
+            const key = STORAGE_KEY + date + '_' + code;
+            localStorage.setItem(key, newStatus);
+
+            // Update data
+            allData = allData.map(r => {
+                if (r.date === date && r.medicine_code === codeNum) {
+                    r.status = newStatus;
+                }
+                return r;
+            });
+            elem.className = 'badge status-' + newStatus;
+            renderTable(filterData());
+        }
+    </script>
+</body>
+
+</html>
